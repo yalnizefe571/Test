@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Din Kültürü Eğlenceli Öğrenme Oyunu</title>
+    <style>
+        :root {
+            --primary: #4A90E2;
+            --secondary: #50E3C2;
+            --accent: #F5A623;
+            --correct: #2ECC71;
+            --wrong: #E74C3C;
+            --bg: #F0F4F8;
+            --card-bg: #FFFFFF;
+            --text: #2C3E50;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 10px;
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            font-size: 20px;
+            color: var(--primary);
+            margin: 0 0 10px 0;
+            font-weight: 700;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 12px;
+            background: #E0E6ED;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.3s ease;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 14px;
+            color: #7F8C8D;
+        }
+
+        .badge {
+            background: #FFF3E0;
+            color: #E67E22;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .stage-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            margin: 15px 0;
+            padding: 8px;
+            background: #EBF5FB;
+            border-radius: 10px;
+            border-left: 5px solid var(--primary);
+        }
+
+        .instruction {
+            text-align: center;
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 15px;
+        }
+
+        /* Eşleştirme Oyunu Stilleri */
+        .matching-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .matching-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .match-card {
+            background: #F8F9F9;
+            border: 2px solid #BDC3C7;
+            padding: 12px 8px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .match-card.selected {
+            border-color: var(--primary);
+            background: #EBF5FB;
+            transform: scale(1.02);
+        }
+
+        .match-card.matched {
+            border-color: var(--correct);
+            background: #EAFAF1;
+            color: var(--correct);
+            cursor: default;
+            opacity: 0.7;
+        }
+
+        /* Boşluk Doldurma Stilleri */
+        .fill-text {
+            font-size: 16px;
+            line-height: 1.8;
+            text-align: center;
+            margin: 20px 0;
+            background: #FAFAFA;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px dashed #CCC;
+        }
+
+        .drop-target {
+            display: inline-block;
+            min-width: 90px;
+            padding: 2px 8px;
+            border-bottom: 3px solid var(--primary);
+            background: #EAECEE;
+            border-radius: 4px;
+            font-weight: bold;
+            color: var(--primary);
+            text-align: center;
+        }
+
+        .options-pool {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .pool-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+
+        /* Test Oyunu Stilleri */
+        .question-text {
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            margin: 20px 0;
+            color: var(--text);
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .quiz-opt-btn {
+            background: white;
+            border: 2px solid #E2E8F0;
+            padding: 12px 15px;
+            border-radius: 12px;
+            text-align: left;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quiz-opt-btn.correct {
+            background: #2ECC71 !important;
+            color: white !important;
+            border-color: #2ECC71 !important;
+        }
+
+        .quiz-opt-btn.wrong {
+            background: #E74C3C !important;
+            color: white !important;
+            border-color: #E74C3C !important;
+        }
+
+        /* Final Ekranı */
+        .final-screen {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .star-rating {
+            font-size: 40px;
+            margin: 15px 0;
+        }
+
+        .btn-action {
+            background: var(--correct);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
+        }
+
+        canvas#confetti {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 99;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="confetti"></canvas>
+    
+    <div class="header">
+        <h1 class="title">🌟 Din Kültürü Eğlenceli Öğrenme 🌟</h1>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progress"></div>
+        </div>
+        <div class="stats-row">
+            <span id="stage-indicator" class="badge">Aşama: 1 / 3</span>
+            <span>Puan: <span id="score" style="color: var(--primary);">0</span></span>
+        </div>
+    </div>
+
+    <div id="game-body"></div>
+</div>
+
+<script>
+    // SES ÜRETİCİ (Web Audio API)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'correct') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+            osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+            osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.4);
+        } else if (type === 'wrong') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.3);
+        } else if (type === 'win') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime + 0.15);
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.6);
+        }
+    }
+
+    // KONFETİ EFEKTİ
+    const canvas = document.getElementById('confetti');
+    const ctx = canvas.getContext('2d');
+    let confettiPieces = [];
+
+    function resizeCanvas() {
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+    }
+    resizeCanvas();
+
+    function launchConfetti() {
+        confettiPieces = [];
+        for (let i = 0; i < 60; i++) {
+            confettiPieces.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height - canvas.height,
+                color: ['#f1c40f', '#e67e22', '#e74c3c', '#9b59b6', '#3498db', '#2ecc71'][Math.floor(Math.random() * 6)],
+                size: Math.random() * 7 + 4,
+                speedY: Math.random() * 3 + 2,
+                speedX: Math.random() * 2 - 1
+            });
+        }
+        animateConfetti();
+    }
+
+    function animateConfetti() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let active = false;
+        confettiPieces.forEach(p => {
+            p.y += p.speedY;
+            p.x += p.speedX;
+            if (p.y < canvas.height) active = true;
+            ctx.fillStyle = p.color;
+            ctx.fillRect(p.x, p.y, p.size, p.size);
+        });
+        if (active) requestAnimationFrame(animateConfetti);
+    }
+
+    // OYUN VERİLERİ VE DURUMU
+    let score = 0;
+    let currentStage = 1;
+    let totalStages = 3;
+
+    // AŞAMA 1: EŞLEŞTİRME VERİLERİ
+    const matchData = [
+        { left: "Cebrail", right: "Vahiy getiren melek", id: 1 },
+        { left: "Mikail", right: "Tabiat olaylarını idare eden melek", id: 2 },
+        { left: "İsrafil", right: "Sura üfleyecek melek", id: 3 },
+        { left: "Tevrat", right: "Hz. Musa'ya indirilen kitap", id: 4 },
+        { left: "Zebur", right: "Hz. Davud'a indirilen kitap", id: 5 },
+        { left: "İncil", right: "Hz. İsa'ya indirilen kitap", id: 6 },
+        { left: "Kur'an-ı Kerim", right: "Hz. Muhammed'e indirilen kitap", id: 7 }
+    ];
+
+    // AŞAMA 2: BOŞLUK DOLDURMA VERİLERİ
+    const fillData = [
+        {
+            title: "Besmele'nin Anlamı",
+            text: "Rahman ve Rahim olan {0} adıyla.",
+            correct: ["Allah'ın"],
+            options: ["Allah'ın", "Peygamberin", "Meleğin"]
+        },
+        {
+            title: "Kelime-i Şehadet'in Anlamı",
+            text: "Şahitlik ederim ki Allah'tan başka {0} yoktur. Ve yine şahitlik ederim ki Hz. Muhammed O'nun kulu ve {1}.",
+            correct: ["ilah", "elçisidir"],
+            options: ["ilah", "elçisidir", "kitabıdır", "meleğidir"]
+        },
+        {
+            title: "Kelime-i Tevhid'in Anlamı",
+            text: "Allah'tan başka ilah yoktur, Hz. Muhammed Allah'ın {0}.",
+            correct: ["elçisidir"],
+            options: ["elçisidir", "kulusun", "meleğidir"]
+        }
+    ];
+
+    // AŞAMA 3: TEST SORULARI
+    const quizData = [
+        {
+            q: "Aşağıdakilerden hangisi İslam'ın şartlarından biri DEĞİLDİR?",
+            opts: ["Namaz kılmak", "Zekat vermek", "Meleklere inanmak", "Oruç tutmak"],
+            ans: 2
+        },
+        {
+            q: "Aşağıdakilerden hangisi İmanın şartlarından biridir?",
+            opts: ["Hacca gitmek", "Kader ve kazaya inanmak", "Kelime-i şehadet getirmek", "Oruç tutmak"],
+            ans: 1
+        },
+        {
+            q: "Kutsal kitaplar ve gönderildiği peygamberler eşleştirmesinden hangisi YANLIŞTIR?",
+            opts: ["Tevrat ➔ Hz. Musa", "Zebur ➔ Hz. Davud", "İncil ➔ Hz. Muhammed", "Kur'an-ı Kerim ➔ Hz. Muhammed"],
+            ans: 2
+        },
+        {
+            q: "'Allah'tan başka ilah yoktur' anlamına gelen ifademiz hangisidir?",
+            opts: ["Kelime-i Tevhid", "Besmele", "Tekbir", "Salavat"],
+            ans: 0
+        },
+        {
+            q: "Tabiat olaylarını (yağmur, rüzgar vb.) düzenlemekle görevli melek hangisidir?",
+            opts: ["Cebrail", "Mikail", "İsrafil", "Rıdvan"],
+            ans: 1
+        }
+    ];
+
+    function updateHeader() {
+        document.getElementById('score').innerText = score;
+        document.getElementById('stage-indicator').innerText = `Aşama: ${currentStage} / ${totalStages}`;
+        let progressPct = ((currentStage - 1) / totalStages) * 100;
+        document.getElementById('progress').style.width = progressPct + '%';
+    }
+
+    // AŞAMA 1 YÜKLE
+    let selectedLeft = null;
+    let selectedRight = null;
+    let matchedCount = 0;
+
+    function loadStage1() {
+        updateHeader();
+        const container = document.getElementById('game-body');
+        
+        let lefts = [...matchData].sort(() => Math.random() - 0.5);
+        let rights = [...matchData].sort(() => Math.random() - 0.5);
+
+        container.innerHTML = `
+            <div class="stage-title">1. Aşama: Eşleştirme Oyunu</div>
+            <div class="instruction">Melekleri ve Kitapları doğru tanımlarıyla eşleştirmek için bir soldan bir sağdan kart seçin.</div>
+            <div class="matching-grid">
+                <div class="matching-column" id="left-col"></div>
+                <div class="matching-column" id="right-col"></div>
+            </div>
+        `;
+
+        const leftCol = document.getElementById('left-col');
+        const rightCol = document.getElementById('right-col');
+
+        lefts.forEach(item => {
+            let el = document.createElement('div');
+            el.className = 'match-card';
+            el.innerText = item.left;
+            el.dataset.id = item.id;
+            el.onclick = () => selectMatchCard(el, 'left');
+            leftCol.appendChild(el);
+        });
+
+        rights.forEach(item => {
+            let el = document.createElement('div');
+            el.className = 'match-card';
+            el.innerText = item.right;
+            el.dataset.id = item.id;
+            el.onclick = () => selectMatchCard(el, 'right');
+            rightCol.appendChild(el);
+        });
+    }
+
+    function selectMatchCard(el, type) {
+        if (el.classList.contains('matched')) return;
+
+        if (type === 'left') {
+            document.querySelectorAll('#left-col .match-card').forEach(c => c.classList.remove('selected'));
+            selectedLeft = el;
+        } else {
+            document.querySelectorAll('#right-col .match-card').forEach(c => c.classList.remove('selected'));
+            selectedRight = el;
+        }
+
+        el.classList.add('selected');
+
+        if (selectedLeft && selectedRight) {
+            if (selectedLeft.dataset.id === selectedRight.dataset.id) {
+                playSound('correct');
+                selectedLeft.classList.remove('selected');
+                selectedRight.classList.remove('selected');
+                selectedLeft.classList.add('matched');
+                selectedRight.classList.add('matched');
+                score += 10;
+                matchedCount++;
+                document.getElementById('score').innerText = score;
+
+                selectedLeft = null;
+                selectedRight = null;
+
+                if (matchedCount === matchData.length) {
+                    launchConfetti();
+                    setTimeout(() => {
+                        currentStage = 2;
+                        loadStage2();
+                    }, 1200);
+                }
+            } else {
+                playSound('wrong');
+                setTimeout(() => {
+                    if (selectedLeft) selectedLeft.classList.remove('selected');
+                    if (selectedRight) selectedRight.classList.remove('selected');
+                    selectedLeft = null;
+                    selectedRight = null;
+                }, 400);
+            }
+        }
+    }
+
+    // AŞAMA 2 YÜKLE
+    let fillIndex = 0;
+    let currentFillAnswers = [];
+
+    function loadStage2() {
+        updateHeader();
+        const container = document.getElementById('game-body');
+        
+        if (fillIndex >= fillData.length) {
+            launchConfetti();
+            currentStage = 3;
+            loadStage3();
+            return;
+        }
+
+        let data = fillData[fillIndex];
+        currentFillAnswers = [];
+
+        let renderedText = data.text;
+        data.correct.forEach((corr, idx) => {
+            renderedText = renderedText.replace(`{${idx}}`, `<span class="drop-target" id="target-${idx}">...</span>`);
+        });
+
+        container.innerHTML = `
+            <div class="stage-title">2. Aşama: Cümle Tamamlama (${fillIndex + 1}/${fillData.length})</div>
+            <div class="instruction">Aşağıdaki <b>${data.title}</b> cümlesinde eksik bırakılan yere uygun kelimeyi seçin.</div>
+            <div class="fill-text">${renderedText}</div>
+            <div class="options-pool" id="pool"></div>
+        `;
+
+        const pool = document.getElementById('pool');
+        let shuffledOpts = [...data.options].sort(() => Math.random() - 0.5);
+
+        shuffledOpts.forEach(opt => {
+            let btn = document.createElement('button');
+            btn.className = 'pool-btn';
+            btn.innerText = opt;
+            btn.onclick = () => handleFillSelect(opt, data, btn);
+            pool.appendChild(btn);
+        });
+    }
+
+    function handleFillSelect(word, data, btn) {
+        let emptyIdx = data.correct.findIndex((c, i) => !currentFillAnswers[i]);
+        if (emptyIdx !== -1) {
+            if (data.correct[emptyIdx] === word) {
+                playSound('correct');
+                currentFillAnswers[emptyIdx] = word;
+                document.getElementById(`target-${emptyIdx}`).innerText = word;
+                document.getElementById(`target-${emptyIdx}`).style.color = '#2ECC71';
+                btn.style.visibility = 'hidden';
+                score += 15;
+                document.getElementById('score').innerText = score;
+
+                if (currentFillAnswers.length === data.correct.length && !currentFillAnswers.includes(undefined)) {
+                    fillIndex++;
+                    setTimeout(() => {
+                        loadStage2();
+                    }, 1000);
+                }
+            } else {
+                playSound('wrong');
+                btn.style.background = '#E74C3C';
+                setTimeout(() => {
+                    btn.style.background = 'var(--primary)';
+                }, 500);
+            }
+        }
+    }
+
+    // AŞAMA 3 YÜKLE
+    let quizIndex = 0;
+
+    function loadStage3() {
+        updateHeader();
+        const container = document.getElementById('game-body');
+
+        if (quizIndex >= quizData.length) {
+            showFinalScreen();
+            return;
+        }
+
+        let q = quizData[quizIndex];
+
+        container.innerHTML = `
+            <div class="stage-title">3. Aşama: Pekiştirme Testi (${quizIndex + 1}/${quizData.length})</div>
+            <div class="question-text">${q.q}</div>
+            <div class="quiz-options" id="quiz-opts"></div>
+        `;
+
+        const optsDiv = document.getElementById('quiz-opts');
+        q.opts.forEach((opt, idx) => {
+            let btn = document.createElement('button');
+            btn.className = 'quiz-opt-btn';
+            btn.innerText = `${['A', 'B', 'C', 'D'][idx]}) ${opt}`;
+            btn.onclick = () => handleQuizSelect(idx, q.ans, btn);
+            optsDiv.appendChild(btn);
+        });
+    }
+
+    function handleQuizSelect(selectedIdx, correctIdx, btn) {
+        const allBtns = document.querySelectorAll('.quiz-opt-btn');
+        allBtns.forEach(b => b.disabled = true);
+
+        if (selectedIdx === correctIdx) {
+            playSound('correct');
+            btn.classList.add('correct');
+            score += 20;
+            document.getElementById('score').innerText = score;
+        } else {
+            playSound('wrong');
+            btn.classList.add('wrong');
+            allBtns[correctIdx].classList.add('correct');
+        }
+
+        setTimeout(() => {
+            quizIndex++;
+            loadStage3();
+        }, 1200);
+    }
+
+    // FİNAL EKRANI
+    function showFinalScreen() {
+        document.getElementById('progress').style.width = '100%';
+        playSound('win');
+        launchConfetti();
+
+        const container = document.getElementById('game-body');
+        container.innerHTML = `
+            <div class="final-screen">
+                <h2>🎉 TEBRİKLER! 🎉</h2>
+                <p style="font-size: 16px;">Tüm aşamaları başarıyla tamamladın!</p>
+                <div class="star-rating">⭐⭐⭐⭐⭐</div>
+                <h3 style="color: var(--primary);">Toplam Puanın: ${score}</h3>
+                <p>Din Kültürü dersindeki temel kavramları harika bir şekilde öğrendin.</p>
+                <button class="btn-action" onclick="restartGame()">Tekrar Oyna 🔄</button>
+            </div>
+        `;
+    }
+
+    function restartGame() {
+        score = 0;
+        currentStage = 1;
+        matchedCount = 0;
+        fillIndex = 0;
+        quizIndex = 0;
+        loadStage1();
+    }
+
+    // BAŞLAT
+    loadStage1();
+</script>
+</body>
+</html>
